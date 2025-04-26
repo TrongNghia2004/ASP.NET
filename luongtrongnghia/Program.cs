@@ -28,7 +28,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Add Authorization (bắt buộc nếu dùng [Authorize])
+// Add Authorization
 builder.Services.AddAuthorization();
 
 // Add DbContext
@@ -38,7 +38,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Add custom services
 builder.Services.AddScoped<JwtService>();
 
-// Add Swagger với Bearer token
+// Add Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -71,6 +71,18 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// ✅ Cấu hình CORS cho React app
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")  // địa chỉ React app
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Nếu bạn dùng cookie hoặc token
+    });
+});
+
 var app = builder.Build();
 
 // Swagger UI
@@ -80,8 +92,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Middleware
+// Middleware thứ tự quan trọng
 app.UseHttpsRedirection();
+app.UseStaticFiles(); // Bật truy cập tệp tĩnh trong wwwroot
+
+app.UseCors("AllowReactApp");       // ⚠️ CORS phải đặt trước Authentication
+
 app.UseAuthentication();
 app.UseAuthorization();
 
